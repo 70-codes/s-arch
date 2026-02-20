@@ -1,0 +1,718 @@
+/* ================================================================================
+   IMMORTAL ENGINE v2.0 - TAILWIND CSS v4.1 INPUT
+   ================================================================================
+   This file is processed by Tailwind CSS v4 to generate the final stylesheet.
+   Run: npm run build (or npm run watch for development)
+   ================================================================================ */
+
+@import "tailwindcss";
+
+/* ================================================================================
+   THEME CONFIGURATION (CSS-first approach in Tailwind v4)
+   ================================================================================ */
+
+@theme {
+    /* Primary Colors (Indigo) */
+    --color-primary-50: oklch(0.97 0.02 270);
+    --color-primary-100: oklch(0.94 0.04 270);
+    --color-primary-200: oklch(0.87 0.08 270);
+    --color-primary-300: oklch(0.78 0.12 270);
+    --color-primary-400: oklch(0.68 0.16 270);
+    --color-primary-500: oklch(0.55 0.2 270);
+    --color-primary-600: oklch(0.48 0.22 270);
+    --color-primary-700: oklch(0.42 0.2 270);
+    --color-primary-800: oklch(0.35 0.16 270);
+    --color-primary-900: oklch(0.28 0.12 270);
+    --color-primary-950: oklch(0.2 0.08 270);
+
+    /* Accent Colors (Amber) */
+    --color-accent-400: oklch(0.82 0.16 85);
+    --color-accent-500: oklch(0.75 0.18 80);
+    --color-accent-600: oklch(0.65 0.18 75);
+
+    /* Success Colors (Green) */
+    --color-success-400: oklch(0.75 0.18 145);
+    --color-success-500: oklch(0.65 0.2 145);
+    --color-success-600: oklch(0.55 0.18 145);
+
+    /* Error Colors (Red/Rose) */
+    --color-error-400: oklch(0.7 0.18 25);
+    --color-error-500: oklch(0.6 0.2 25);
+    --color-error-600: oklch(0.5 0.18 25);
+
+    /* Fonts */
+    --font-sans:
+        "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+
+    /* Animation Durations */
+    --duration-fast: 100ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+}
+
+/* ================================================================================
+   BASE STYLES
+   ================================================================================ */
+
+@layer base {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    html {
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    /* Custom scrollbar for dark theme */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgb(30 41 59); /* slate-800 */
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgb(71 85 105); /* slate-600 */
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgb(100 116 139); /* slate-500 */
+    }
+
+    /* Focus styles */
+    :focus-visible {
+        outline: 2px solid var(--color-primary-500);
+        outline-offset: 2px;
+    }
+
+    /* Selection */
+    ::selection {
+        background: var(--color-primary-500);
+        color: white;
+    }
+}
+
+/* ================================================================================
+   COMPONENT STYLES
+   ================================================================================ */
+
+@layer components {
+    /* ============================================
+     App Container
+     ============================================ */
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+        background-color: rgb(15 23 42); /* slate-900 */
+        color: rgb(241 245 249); /* slate-100 */
+        overflow: hidden;
+    }
+
+    /* ============================================
+     Toolbar
+     ============================================ */
+    .toolbar {
+        height: 48px;
+        background-color: rgb(30 41 59); /* slate-800 */
+        border-bottom: 1px solid rgb(51 65 85); /* slate-700 */
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .toolbar-button {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: background-color var(--duration-fast);
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: inherit;
+    }
+
+    .toolbar-button:hover:not(:disabled) {
+        background-color: rgb(51 65 85); /* slate-700 */
+    }
+
+    .toolbar-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .toolbar-separator {
+        width: 1px;
+        height: 24px;
+        background-color: rgb(51 65 85); /* slate-700 */
+        margin: 0 8px;
+    }
+
+    /* ============================================
+     Sidebar
+     ============================================ */
+    .sidebar {
+        background-color: rgb(30 41 59); /* slate-800 */
+        border-right: 1px solid rgb(51 65 85); /* slate-700 */
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        transition: width var(--duration-normal);
+    }
+
+    .sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+        margin: 2px 8px;
+        border-radius: 6px;
+        transition: background-color var(--duration-fast);
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: rgb(203 213 225); /* slate-300 */
+        text-align: left;
+        width: calc(100% - 16px);
+    }
+
+    .sidebar-item:hover {
+        background-color: rgb(51 65 85); /* slate-700 */
+    }
+
+    .sidebar-item.active {
+        background-color: var(--color-primary-600);
+        color: white;
+    }
+
+    .sidebar-item-hover:hover {
+        background-color: rgb(51 65 85) !important; /* slate-700 */
+    }
+
+    /* ============================================
+     Main Content Area
+     ============================================ */
+    .main-content {
+        flex: 1;
+        overflow: auto;
+        background-color: rgb(15 23 42); /* slate-900 */
+    }
+
+    /* ============================================
+     Properties Panel
+     ============================================ */
+    .properties-panel {
+        background-color: rgb(30 41 59); /* slate-800 */
+        border-left: 1px solid rgb(51 65 85); /* slate-700 */
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        transition: width var(--duration-normal);
+        overflow: hidden;
+    }
+
+    /* ============================================
+     Status Bar
+     ============================================ */
+    .status-bar {
+        height: 24px;
+        background-color: rgb(30 41 59); /* slate-800 */
+        border-top: 1px solid rgb(51 65 85); /* slate-700 */
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        font-size: 12px;
+        color: rgb(148 163 184); /* slate-400 */
+        flex-shrink: 0;
+    }
+
+    /* ============================================
+     Entity Card (for canvas)
+     ============================================ */
+    .entity-card {
+        background-color: rgb(30 41 59); /* slate-800 */
+        border: 2px solid rgb(51 65 85); /* slate-700 */
+        border-radius: 12px;
+        min-width: 220px;
+        box-shadow:
+            0 4px 6px -1px rgb(0 0 0 / 0.3),
+            0 2px 4px -2px rgb(0 0 0 / 0.2);
+        transition:
+            border-color var(--duration-fast),
+            box-shadow var(--duration-fast);
+        overflow: hidden;
+    }
+
+    .entity-card:hover {
+        border-color: var(--color-primary-400);
+        box-shadow:
+            0 10px 15px -3px rgb(0 0 0 / 0.3),
+            0 4px 6px -4px rgb(0 0 0 / 0.2);
+    }
+
+    .entity-card.selected {
+        border-color: var(--color-primary-500);
+        box-shadow: 0 0 0 3px rgb(99 102 241 / 0.3);
+    }
+
+    .entity-card-header {
+        background: linear-gradient(
+            135deg,
+            var(--color-primary-600),
+            var(--color-primary-700)
+        );
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .entity-card-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+    }
+
+    .entity-card-body {
+        padding: 8px 0;
+    }
+
+    /* ============================================
+     Field Row
+     ============================================ */
+    .field-row {
+        display: flex;
+        align-items: center;
+        padding: 6px 16px;
+        gap: 8px;
+        font-size: 13px;
+        transition: background-color var(--duration-fast);
+    }
+
+    .field-row:hover {
+        background-color: rgb(51 65 85 / 0.5); /* slate-700/50 */
+    }
+
+    .field-name {
+        flex: 1;
+        color: rgb(226 232 240); /* slate-200 */
+        font-family: var(--font-mono);
+        font-size: 12px;
+    }
+
+    .field-type {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        background-color: rgb(30 58 138 / 0.5); /* blue-900/50 */
+        color: rgb(147 197 253); /* blue-300 */
+        font-family: var(--font-mono);
+    }
+
+    .field-type.primary {
+        background-color: rgb(120 53 15 / 0.5); /* amber-900/50 */
+        color: rgb(252 211 77); /* amber-300 */
+    }
+
+    .field-type.foreign {
+        background-color: rgb(88 28 135 / 0.5); /* purple-900/50 */
+        color: rgb(216 180 254); /* purple-300 */
+    }
+
+    /* ============================================
+     Connection Ports
+     ============================================ */
+    .port {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid rgb(71 85 105); /* slate-600 */
+        background-color: rgb(30 41 59); /* slate-800 */
+        transition: all var(--duration-fast);
+        cursor: crosshair;
+    }
+
+    .port:hover {
+        border-color: var(--color-primary-400);
+        background-color: var(--color-primary-500);
+        transform: scale(1.2);
+    }
+
+    .port.input {
+        position: absolute;
+        left: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .port.output {
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* ============================================
+     Connection Lines (SVG)
+     ============================================ */
+    .connection-line {
+        fill: none;
+        stroke: rgb(71 85 105); /* slate-600 */
+        stroke-width: 2;
+        transition: stroke var(--duration-fast);
+    }
+
+    .connection-line:hover,
+    .connection-line.selected {
+        stroke: var(--color-primary-500);
+        stroke-width: 3;
+    }
+
+    /* ============================================
+     HTTP Method Badges
+     ============================================ */
+    .method-badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: var(--font-mono);
+    }
+
+    .method-get {
+        background-color: rgb(22 101 52 / 0.3); /* green-800/30 */
+        color: rgb(134 239 172); /* green-300 */
+    }
+
+    .method-post {
+        background-color: rgb(30 58 138 / 0.3); /* blue-800/30 */
+        color: rgb(147 197 253); /* blue-300 */
+    }
+
+    .method-put {
+        background-color: rgb(120 53 15 / 0.3); /* amber-800/30 */
+        color: rgb(252 211 77); /* amber-300 */
+    }
+
+    .method-patch {
+        background-color: rgb(120 53 15 / 0.3); /* amber-800/30 */
+        color: rgb(253 186 116); /* amber-300 */
+    }
+
+    .method-delete {
+        background-color: rgb(127 29 29 / 0.3); /* red-900/30 */
+        color: rgb(252 165 165); /* red-300 */
+    }
+
+    /* ============================================
+     Canvas
+     ============================================ */
+    .canvas-container {
+        position: relative;
+        flex: 1;
+        overflow: hidden;
+        background-color: rgb(15 23 42); /* slate-900 */
+    }
+
+    .canvas-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgb(51 65 85 / 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(51 65 85 / 0.3) 1px, transparent 1px);
+        background-size: 20px 20px;
+        pointer-events: none;
+    }
+
+    .canvas-content {
+        position: absolute;
+        transform-origin: 0 0;
+    }
+
+    /* ============================================
+     Dialogs
+     ============================================ */
+    .dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgb(0 0 0 / 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+    }
+
+    .dialog {
+        background-color: rgb(30 41 59); /* slate-800 */
+        border: 1px solid rgb(51 65 85); /* slate-700 */
+        border-radius: 12px;
+        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+        max-width: 32rem;
+        width: 100%;
+        margin: 16px;
+    }
+
+    .dialog-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid rgb(51 65 85); /* slate-700 */
+    }
+
+    .dialog-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .dialog-body {
+        padding: 24px;
+    }
+
+    .dialog-footer {
+        padding: 16px 24px;
+        border-top: 1px solid rgb(51 65 85); /* slate-700 */
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    /* ============================================
+     Buttons
+     ============================================ */
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all var(--duration-fast);
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background-color: var(--color-primary-600);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--color-primary-700);
+    }
+
+    .btn-secondary {
+        background-color: rgb(51 65 85); /* slate-700 */
+        color: rgb(226 232 240); /* slate-200 */
+    }
+
+    .btn-secondary:hover {
+        background-color: rgb(71 85 105); /* slate-600 */
+    }
+
+    .btn-success {
+        background-color: var(--color-success-600);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: var(--color-success-500);
+    }
+
+    .btn-danger {
+        background-color: var(--color-error-600);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: var(--color-error-500);
+    }
+
+    /* ============================================
+     Form Inputs
+     ============================================ */
+    .input {
+        width: 100%;
+        padding: 10px 16px;
+        background-color: rgb(51 65 85); /* slate-700 */
+        border: 1px solid rgb(71 85 105); /* slate-600 */
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 40px;
+        box-sizing: border-box;
+        transition:
+            border-color var(--duration-fast),
+            box-shadow var(--duration-fast);
+    }
+
+    .input:focus {
+        outline: none;
+        border-color: var(--color-primary-500);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .input::placeholder {
+        color: rgb(148 163 184); /* slate-400 */
+    }
+
+    .label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: rgb(203 213 225); /* slate-300 */
+    }
+
+    .select {
+        width: 100%;
+        padding: 10px 16px;
+        padding-right: 36px;
+        background-color: rgb(51 65 85); /* slate-700 */
+        border: 1px solid rgb(71 85 105); /* slate-600 */
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 40px;
+        box-sizing: border-box;
+        cursor: pointer;
+        transition:
+            border-color var(--duration-fast),
+            box-shadow var(--duration-fast);
+        /* Custom dropdown arrow */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 5L6 8L9 5' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    .select:focus {
+        outline: none;
+        border-color: var(--color-primary-500);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .select option {
+        background-color: rgb(30 41 59); /* slate-800 */
+        color: white;
+        padding: 8px 12px;
+    }
+
+    .checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--color-primary-500);
+        cursor: pointer;
+    }
+
+    /* Textarea inherits .input but needs extra spacing */
+    textarea.input {
+        min-height: 80px;
+        padding: 12px 16px;
+        line-height: 1.6;
+    }
+
+    /* Disabled state */
+    .input:disabled,
+    .select:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Read-only state */
+    .input:read-only {
+        background-color: rgb(30 41 59); /* slate-800 */
+        cursor: default;
+    }
+
+    /* Input group spacing */
+    .input-group + .input-group {
+        margin-top: 12px;
+    }
+
+    /* ============================================
+     Feature Cards (Welcome Page)
+     ============================================ */
+    .feature-card {
+        padding: 24px;
+        background-color: rgb(30 41 59); /* slate-800 */
+        border: 1px solid rgb(51 65 85); /* slate-700 */
+        border-radius: 12px;
+        transition: border-color var(--duration-fast);
+    }
+
+    .feature-card:hover {
+        border-color: var(--color-primary-500);
+    }
+
+    .feature-card-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .feature-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: white;
+    }
+
+    .feature-card-description {
+        font-size: 14px;
+        color: rgb(148 163 184); /* slate-400 */
+        line-height: 1.5;
+    }
+}
+
+/* ================================================================================
+   UTILITY OVERRIDES
+   ================================================================================ */
+
+@layer utilities {
+    /* Transition utilities */
+    .transition-fast {
+        transition-duration: var(--duration-fast);
+    }
+
+    .transition-normal {
+        transition-duration: var(--duration-normal);
+    }
+
+    .transition-slow {
+        transition-duration: var(--duration-slow);
+    }
+
+    /* No scrollbar utility */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}

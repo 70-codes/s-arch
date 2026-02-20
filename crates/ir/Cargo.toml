@@ -1,0 +1,28 @@
+[package]
+name = "imortal_ir"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Intermediate Representation for Immortal Engine - Project graph, entities, relationships, and endpoints"
+repository.workspace = true
+
+[dependencies]
+# Internal crates
+imortal_core = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Unique identifiers
+uuid = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Date/Time
+chrono = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

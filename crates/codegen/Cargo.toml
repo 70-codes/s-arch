@@ -1,0 +1,47 @@
+[package]
+name = "imortal_codegen"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Code generation engine for Immortal Engine"
+repository.workspace = true
+
+[dependencies]
+# Internal crates
+imortal_core = { workspace = true }
+imortal_ir = { workspace = true }
+
+# Code generation
+quote = { workspace = true }
+syn = { workspace = true }
+proc-macro2 = { workspace = true }
+
+# Case conversion (snake_case, PascalCase, etc.)
+heck = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Async runtime (for file I/O)
+tokio = { workspace = true }
+
+# Serialization (for templates)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# File system utilities
+walkdir = { workspace = true }
+
+# Date/Time (for migration timestamps)
+chrono = { workspace = true }
+
+# Unique identifiers
+uuid = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

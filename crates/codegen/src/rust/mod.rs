@@ -1,0 +1,619 @@
+//! # Rust Code Generation
+//!
+//! This module contains all generators that produce Rust source code for the
+//! generated project. Each sub-module is responsible for one category of output
+//! files (models, handlers, routes, etc.).
+//!
+//! ## Architecture
+//!
+//! The top-level [`generate_rust_project`] function orchestrates every
+//! sub-generator and collects the results into a flat `Vec<GeneratedFile>`.
+//!
+//! ```text
+//! generate_rust_project
+//!   ├── cargo::generate_cargo_toml
+//!   ├── models::generate_models
+//!   ├── handlers::generate_handlers
+//!   ├── routes::generate_routes
+//!   ├── auth::generate_auth           (if auth enabled)
+//!   ├── middleware::generate_middleware
+//!   ├── config::generate_config
+//!   ├── error::generate_error
+//!   ├── main_rs::generate_main
+//!   └── tests::generate_tests         (if tests enabled)
+//! ```
+//!
+//! ## Generated Project Layout (REST API)
+//!
+//! ```text
+//! {project_name}/
+//! ├── Cargo.toml
+//! ├── .env.example
+//! ├── .gitignore
+//! ├── README.md
+//! ├── src/
+//! │   ├── main.rs
+//! │   ├── lib.rs
+//! │   ├── config.rs
+//! │   ├── error.rs
+//! │   ├── state.rs
+//! │   ├── models/
+//! │   │   ├── mod.rs
+//! │   │   └── {entity}.rs  (one per entity)
+//! │   ├── handlers/
+//! │   │   ├── mod.rs
+//! │   │   └── {entity}.rs  (one per entity with endpoints)
+//! │   ├── routes/
+//! │   │   ├── mod.rs
+//! │   │   └── api.rs
+//! │   └── auth/             (if auth enabled)
+//! │       ├── mod.rs
+//! │       ├── jwt.rs
+//! │       └── middleware.rs
+//! └── tests/
+//!     └── api_tests.rs
+//! ```
+
+pub mod auth;
+pub mod cargo;
+pub mod config;
+pub mod error;
+pub mod handlers;
+pub mod main_rs;
+pub mod middleware;
+pub mod models;
+pub mod routes;
+pub mod test_gen;
+
+use crate::context::GenerationContext;
+use crate::{FileType, GeneratedFile};
+
+// ============================================================================
+// Orchestrator
+// ============================================================================
+
+/// Generate all Rust source files for the project.
+///
+/// This is the main entry point for Rust code generation. It calls each
+/// sub-generator in order and collects every [`GeneratedFile`] into a
+/// single flat vector.
+///
+/// # Arguments
+///
+/// * `ctx` – The fully-populated generation context built from the project
+///   graph and generator configuration.
+///
+/// # Returns
+///
+/// A `Vec<GeneratedFile>` containing every file that should be written to
+/// disk for the generated Rust project.
+pub fn generate_rust_project(ctx: &GenerationContext) -> Vec<GeneratedFile> {
+    let mut files: Vec<GeneratedFile> = Vec::new();
+
+    // ── Project scaffolding ──────────────────────────────────────────────
+    files.extend(cargo::generate_cargo_toml(ctx));
+    files.extend(generate_dotenv(ctx));
+    files.extend(generate_gitignore(ctx));
+    files.extend(generate_readme(ctx));
+
+    // ── Core source modules ──────────────────────────────────────────────
+    files.extend(config::generate_config(ctx));
+    files.extend(error::generate_error(ctx));
+    files.extend(generate_state(ctx));
+    files.extend(generate_lib_rs(ctx));
+
+    // ── Models (SeaORM entities + DTOs) ──────────────────────────────────
+    files.extend(models::generate_models(ctx));
+
+    // ── Handlers (Axum request handlers) ─────────────────────────────────
+    files.extend(handlers::generate_handlers(ctx));
+
+    // ── Routes (Axum router) ─────────────────────────────────────────────
+    files.extend(routes::generate_routes(ctx));
+
+    // ── Authentication (JWT / middleware) ─────────────────────────────────
+    if ctx.auth_enabled() {
+        files.extend(auth::generate_auth(ctx));
+    }
+
+    // ── Generic middleware ────────────────────────────────────────────────
+    files.extend(middleware::generate_middleware(ctx));
+
+    // ── main.rs (entry point) ────────────────────────────────────────────
+    files.extend(main_rs::generate_main(ctx));
+
+    // ── Tests ────────────────────────────────────────────────────────────
+    if ctx.generate_tests() {
+        files.extend(test_gen::generate_tests(ctx));
+    }
+
+    files
+}
+
+// ============================================================================
+// Inline small generators (files that don't warrant their own module)
+// ============================================================================
+
+/// Generate `src/lib.rs` — re-exports all modules for the generated crate.
+fn generate_lib_rs(ctx: &GenerationContext) -> Vec<GeneratedFile> {
+    let mut modules = vec![
+        "pub mod config;",
+        "pub mod error;",
+        "pub mod state;",
+        "pub mod models;",
+        "pub mod handlers;",
+        "pub mod routes;",
+    ];
+
+    if ctx.auth_enabled() {
+        modules.push("pub mod auth;");
+    }
+
+    modules.push("pub mod middleware;");
+
+    let mut content = String::with_capacity(512);
+
+    if ctx.generate_docs() {
+        content.push_str(&format!(
+            "//! # {}\n//!\n//! Auto-generated by Immortal Engine v2.0.\n\n",
+            ctx.package_name()
+        ));
+    }
+
+    for m in &modules {
+        content.push_str(m);
+        content.push('\n');
+    }
+
+    vec![GeneratedFile::new("src/lib.rs", content, FileType::Rust)]
+}
+
+/// Generate `src/state.rs` — the shared application state (database pool, config).
+fn generate_state(ctx: &GenerationContext) -> Vec<GeneratedFile> {
+    let mut content = String::with_capacity(1024);
+
+    if ctx.generate_docs() {
+        content.push_str("//! Application state shared across all handlers.\n\n");
+    }
+
+    content.push_str("use sea_orm::DatabaseConnection;\n");
+    content.push_str("use crate::config::Config;\n\n");
+
+    content.push_str(
+        "\
+/// Shared application state available in every Axum handler via `State<AppState>`.
+#[derive(Clone)]
+pub struct AppState {
+    /// SeaORM database connection pool.
+    pub db: DatabaseConnection,
+    /// Application configuration.
+    pub config: Config,
+}
+
+impl AppState {
+    /// Create a new `AppState`.
+    pub fn new(db: DatabaseConnection, config: Config) -> Self {
+        Self { db, config }
+    }
+}
+",
+    );
+
+    vec![GeneratedFile::new("src/state.rs", content, FileType::Rust)]
+}
+
+/// Generate `.env.example` with sensible defaults.
+fn generate_dotenv(ctx: &GenerationContext) -> Vec<GeneratedFile> {
+    let db_url = ctx.example_database_url();
+    let host = ctx.server_host();
+    let port = ctx.server_port();
+
+    let mut content = String::with_capacity(512);
+
+    content.push_str(
+        "# =============================================================================\n",
+    );
+    content.push_str(&format!(
+        "# {} — Environment Variables\n",
+        ctx.package_name()
+    ));
+    content.push_str(
+        "# =============================================================================\n",
+    );
+    content.push_str("# Copy this file to `.env` and fill in the values.\n\n");
+
+    content.push_str(
+        "# ── Server ────────────────────────────────────────────────────────────────────\n",
+    );
+    content.push_str(&format!("SERVER_HOST={}\n", host));
+    content.push_str(&format!("SERVER_PORT={}\n", port));
+    content.push_str("RUST_LOG=info\n\n");
+
+    content.push_str(
+        "# ── Database ──────────────────────────────────────────────────────────────────\n",
+    );
+    content.push_str(&format!("DATABASE_URL={}\n", db_url));
+    content.push_str("DATABASE_MAX_CONNECTIONS=10\n");
+    content.push_str("DATABASE_MIN_CONNECTIONS=1\n\n");
+
+    if ctx.auth_enabled() {
+        content.push_str(
+            "# ── Authentication ────────────────────────────────────────────────────────────\n",
+        );
+        content.push_str("JWT_SECRET=change-me-to-a-long-random-string\n");
+        content.push_str(&format!(
+            "JWT_EXPIRY_HOURS={}\n\n",
+            ctx.auth_config().token_expiry_hours
+        ));
+    }
+
+    vec![GeneratedFile::new(".env.example", content, FileType::Env)]
+}
+
+/// Generate `.gitignore` for a Rust project.
+fn generate_gitignore(_ctx: &GenerationContext) -> Vec<GeneratedFile> {
+    let content = "\
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+";
+
+    vec![GeneratedFile::new(
+        ".gitignore",
+        content.to_string(),
+        FileType::Other,
+    )]
+}
+
+/// Generate `README.md` with project overview and setup instructions.
+fn generate_readme(ctx: &GenerationContext) -> Vec<GeneratedFile> {
+    let pkg = ctx.package_name();
+    let db_name = match ctx.database() {
+        imortal_ir::DatabaseType::PostgreSQL => "PostgreSQL",
+        imortal_ir::DatabaseType::MySQL => "MySQL",
+        imortal_ir::DatabaseType::SQLite => "SQLite",
+    };
+    let entity_count = ctx.entity_count();
+    let endpoint_count = ctx.endpoints().len();
+
+    let auth_section = if ctx.auth_enabled() {
+        format!(
+            "\
+## Authentication
+
+This project uses **JWT** authentication. Set the following environment variables:
+
+- `JWT_SECRET` — a long, random secret key
+- `JWT_EXPIRY_HOURS` — token lifetime in hours (default: {})
+
+Protected endpoints require a valid `Authorization: Bearer <token>` header.
+",
+            ctx.auth_config().token_expiry_hours,
+        )
+    } else {
+        String::new()
+    };
+
+    let content = format!(
+        "\
+# {pkg}
+
+> Auto-generated by **Immortal Engine v2.0**
+
+## Overview
+
+| Property       | Value       |
+|----------------|-------------|
+| Framework      | Axum        |
+| ORM            | SeaORM      |
+| Database       | {db_name}   |
+| Entities       | {entity_count}          |
+| Endpoint Groups| {endpoint_count}          |
+
+## Quick Start
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Edit .env with your database credentials
+$EDITOR .env
+
+# 3. Run database migrations
+# (Apply the SQL files in the migrations/ directory)
+
+# 4. Build and run
+cargo run
+```
+
+The server will start on `http://{host}:{port}`.
+
+{auth_section}
+## Project Structure
+
+```
+src/
+├── main.rs          # Entry point, server setup
+├── lib.rs           # Module declarations
+├── config.rs        # Configuration from environment
+├── error.rs         # Application error types
+├── state.rs         # Shared application state
+├── models/          # SeaORM entity definitions & DTOs
+├── handlers/        # Axum request handlers
+├── routes/          # Route definitions
+└── middleware/       # Custom middleware
+```
+
+## License
+
+This project was generated with Immortal Engine. Use it however you like.
+",
+        host = ctx.server_host(),
+        port = ctx.server_port(),
+    );
+
+    vec![GeneratedFile::new("README.md", content, FileType::Markdown)]
+}
+
+// ============================================================================
+// Shared utilities used by multiple sub-generators
+// ============================================================================
+
+/// Format a doc-comment block from an optional description string.
+/// Returns an empty string if `desc` is `None` or docs are disabled.
+pub fn doc_comment(desc: Option<&str>, ctx: &GenerationContext) -> String {
+    if !ctx.generate_docs() {
+        return String::new();
+    }
+    match desc {
+        Some(text) if !text.is_empty() => {
+            let mut out = String::new();
+            for line in text.lines() {
+                out.push_str(&format!("/// {}\n", line));
+            }
+            out
+        }
+        _ => String::new(),
+    }
+}
+
+/// Indent every line of `text` by `n` spaces.
+pub fn indent(text: &str, n: usize) -> String {
+    let prefix = " ".repeat(n);
+    text.lines()
+        .map(|line| {
+            if line.trim().is_empty() {
+                String::new()
+            } else {
+                format!("{}{}", prefix, line)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Generate a standard file header comment.
+pub fn file_header(description: &str) -> String {
+    format!(
+        "\
+//! {}
+//!
+//! Auto-generated by Immortal Engine v2.0.
+//! DO NOT EDIT — changes will be overwritten on next generation.
+
+",
+        description
+    )
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use imortal_ir::ProjectGraph;
+
+    #[test]
+    fn test_generate_rust_project_empty() {
+        let project = ProjectGraph::new("empty");
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_rust_project(&ctx);
+
+        // Even an empty project should produce scaffolding files
+        assert!(!files.is_empty());
+
+        // Check that key files exist
+        let paths: Vec<String> = files
+            .iter()
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect();
+
+        assert!(
+            paths.iter().any(|p| p == "Cargo.toml"),
+            "Missing Cargo.toml"
+        );
+        assert!(
+            paths.iter().any(|p| p == ".env.example"),
+            "Missing .env.example"
+        );
+        assert!(
+            paths.iter().any(|p| p == ".gitignore"),
+            "Missing .gitignore"
+        );
+        assert!(paths.iter().any(|p| p == "README.md"), "Missing README.md");
+        assert!(
+            paths.iter().any(|p| p == "src/main.rs"),
+            "Missing src/main.rs"
+        );
+        assert!(
+            paths.iter().any(|p| p == "src/lib.rs"),
+            "Missing src/lib.rs"
+        );
+        assert!(
+            paths.iter().any(|p| p == "src/config.rs"),
+            "Missing src/config.rs"
+        );
+        assert!(
+            paths.iter().any(|p| p == "src/error.rs"),
+            "Missing src/error.rs"
+        );
+        assert!(
+            paths.iter().any(|p| p == "src/state.rs"),
+            "Missing src/state.rs"
+        );
+    }
+
+    #[test]
+    fn test_generate_lib_rs_without_auth() {
+        let mut project = ProjectGraph::new("test");
+        project.config.auth.enabled = false;
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_lib_rs(&ctx);
+
+        assert_eq!(files.len(), 1);
+        let content = &files[0].content;
+        assert!(content.contains("pub mod config;"));
+        assert!(content.contains("pub mod models;"));
+        assert!(content.contains("pub mod handlers;"));
+        assert!(content.contains("pub mod routes;"));
+        assert!(content.contains("pub mod middleware;"));
+        // Auth should NOT be present when not enabled
+        assert!(!content.contains("pub mod auth;"));
+    }
+
+    #[test]
+    fn test_generate_lib_rs_with_auth() {
+        let mut project = ProjectGraph::new("test");
+        project.config.auth = imortal_ir::AuthConfig::jwt();
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_lib_rs(&ctx);
+
+        let content = &files[0].content;
+        assert!(content.contains("pub mod auth;"));
+    }
+
+    #[test]
+    fn test_generate_state() {
+        let project = ProjectGraph::new("test");
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_state(&ctx);
+
+        assert_eq!(files.len(), 1);
+        let content = &files[0].content;
+        assert!(content.contains("pub struct AppState"));
+        assert!(content.contains("DatabaseConnection"));
+        assert!(content.contains("Config"));
+    }
+
+    #[test]
+    fn test_generate_dotenv() {
+        let project = ProjectGraph::new("myapp");
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_dotenv(&ctx);
+
+        assert_eq!(files.len(), 1);
+        let content = &files[0].content;
+        assert!(content.contains("DATABASE_URL="));
+        assert!(content.contains("SERVER_HOST="));
+        assert!(content.contains("SERVER_PORT="));
+    }
+
+    #[test]
+    fn test_generate_dotenv_with_auth() {
+        let mut project = ProjectGraph::new("myapp");
+        project.config.auth = imortal_ir::AuthConfig::jwt();
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_dotenv(&ctx);
+
+        let content = &files[0].content;
+        assert!(content.contains("JWT_SECRET="));
+        assert!(content.contains("JWT_EXPIRY_HOURS="));
+    }
+
+    #[test]
+    fn test_generate_gitignore() {
+        let project = ProjectGraph::new("test");
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_gitignore(&ctx);
+
+        assert_eq!(files.len(), 1);
+        let content = &files[0].content;
+        assert!(content.contains("/target/"));
+        assert!(content.contains(".env"));
+    }
+
+    #[test]
+    fn test_generate_readme() {
+        let mut project = ProjectGraph::new("blog_api");
+        project.config.package_name = "blog_api".to_string();
+        let ctx = GenerationContext::from_project_default(&project);
+        let files = generate_readme(&ctx);
+
+        assert_eq!(files.len(), 1);
+        let content = &files[0].content;
+        assert!(content.contains("blog_api"));
+        assert!(content.contains("Axum"));
+        assert!(content.contains("SeaORM"));
+        assert!(content.contains("Quick Start"));
+    }
+
+    #[test]
+    fn test_doc_comment() {
+        let project = ProjectGraph::new("t");
+        let ctx = GenerationContext::from_project_default(&project);
+
+        let result = doc_comment(Some("Hello world"), &ctx);
+        assert_eq!(result, "/// Hello world\n");
+
+        let result = doc_comment(None, &ctx);
+        assert!(result.is_empty());
+
+        let result = doc_comment(Some(""), &ctx);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_doc_comment_multiline() {
+        let project = ProjectGraph::new("t");
+        let ctx = GenerationContext::from_project_default(&project);
+
+        let result = doc_comment(Some("Line 1\nLine 2"), &ctx);
+        assert_eq!(result, "/// Line 1\n/// Line 2\n");
+    }
+
+    #[test]
+    fn test_indent() {
+        assert_eq!(indent("hello\nworld", 4), "    hello\n    world");
+        assert_eq!(indent("a\n\nb", 2), "  a\n\n  b");
+    }
+
+    #[test]
+    fn test_file_header() {
+        let header = file_header("User model definitions.");
+        assert!(header.contains("User model definitions."));
+        assert!(header.contains("Immortal Engine"));
+        assert!(header.contains("DO NOT EDIT"));
+    }
+}

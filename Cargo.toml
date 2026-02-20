@@ -1,0 +1,108 @@
+[package]
+name = "s-arch-p"
+version = "0.1.0"
+edition = "2024"
+authors = ["Stephen Kinuthia <kinuthiasteve098@gmail.com>"]
+license = "MIT"
+description = "Immortal Engine v2.0 - Visual Code Generator for Rust Applications"
+repository = "https://github.com/70-codes/immortal_engine"
+keywords = ["code-generator", "visual-editor", "rust", "dioxus", "axum"]
+categories = ["development-tools", "gui"]
+
+[[bin]]
+name = "immortal-engine"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates
+imortal_core = { path = "crates/core" }
+imortal_ir = { path = "crates/ir" }
+imortal_codegen = { path = "crates/codegen" }
+imortal_ui = { path = "crates/ui" }
+
+# Async runtime
+tokio = { version = "1.45", features = ["full"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    "crates/core",
+    "crates/ir",
+    "crates/codegen",
+    "crates/ui",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Stephen Kinuthia <kinuthiasteve098@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/70-codes/immortal_engine"
+
+[workspace.dependencies]
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Unique identifiers
+uuid = { version = "1.17", features = ["v4", "serde"] }
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Async runtime
+tokio = { version = "1.45", features = ["full"] }
+
+# Code generation
+quote = "1.0"
+syn = { version = "2.0", features = ["full", "parsing"] }
+proc-macro2 = "1.0"
+heck = "0.5"
+
+# Dioxus (UI Framework)
+dioxus = { version = "0.7", features = ["desktop"] }
+
+# File dialogs
+rfd = "0.17"
+
+# File system utilities
+walkdir = "2.5"
+tempfile = "3.19"
+
+# Internal crates
+imortal_core = { path = "crates/core" }
+imortal_ir = { path = "crates/ir" }
+imortal_codegen = { path = "crates/codegen" }
+imortal_ui = { path = "crates/ui" }
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+strip = false

@@ -1,0 +1,46 @@
+[package]
+name = "imortal_cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Command-line interface for Immortal Engine"
+
+[[bin]]
+name = "imortal"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates
+imortal_core = { workspace = true }
+imortal_ir = { workspace = true }
+imortal_codegen = { workspace = true }
+
+# CLI framework
+clap = { version = "4.5", features = ["derive", "env", "color"] }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# File system
+walkdir = { workspace = true }
+
+# Colored output
+colored = "3.1"
+
+[dev-dependencies]
+tempfile = { workspace = true }
+assert_cmd = "2.0"
+predicates = "3.1"
