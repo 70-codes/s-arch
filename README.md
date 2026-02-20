@@ -445,8 +445,8 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 <div align="center">
 
-*Built with 🦀 Rust, ⚡ Dioxus, and ❤️ by Stephen Kinuthia*
-
 **Immortal Engine v2.0** — Design Visually, Generate Professionally.
+
+*Stephen Kinuthia*
 
 </div>
