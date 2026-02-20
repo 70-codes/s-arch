@@ -199,29 +199,23 @@ s-arch-p/
 
 ### Crate Dependencies
 
-```
-                    ┌──────────────────┐
-                    │   imortal_core   │
-                    │   Types, Errors  │
-                    └────────┬─────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              ▼              ▼              ▼
-       ┌────────────┐ ┌────────────┐ ┌────────────┐
-       │ imortal_ir │ │  imortal_  │ │  imortal_  │
-       │  Entities  │▶│  codegen   │ │    cli     │
-       │  Relations │ │ Generator  │ │  Commands  │
-       │  Endpoints │ │ Templates  │ │            │
-       └──────┬─────┘ └────────────┘ └────────────┘
-              │              ▲
-              └──────────────┘
-                    │
-                    ▼
-            ┌──────────────────┐
-            │    imortal_ui    │
-            │  Dioxus Desktop  │
-            │  Pages, Canvas   │
-            └──────────────────┘
+```text
+                  imortal_core
+                  Types, Errors
+                       |
+          +------------+------------+
+          |            |            |
+     imortal_ir   imortal_    imortal_
+      Entities     codegen       cli
+      Relations   Generator   Commands
+      Endpoints   Templates
+          |            ^
+          +------------+
+                |
+                v
+           imortal_ui
+          Dioxus Desktop
+          Pages, Canvas
 ```
 
 ### Technology Stack
@@ -436,16 +430,6 @@ crates/codegen/    — Generator, context, rust/*, migrations/*, frontend/*
 crates/ui/         — App, pages/*, components/*, hooks/*, state
 crates/cli/        — Command-line interface (placeholder)
 ```
-
-### Key Metrics
-| Metric | Value |
-|--------|-------|
-| Lines of Code (Rust) | ~65,000+ |
-| Files | 72+ |
-| Tests | 502+ |
-| Code Generators | 19 |
-| UI Components | 30+ |
-| Field Templates | 14 |
 
 ## 📄 License
 
